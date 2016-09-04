@@ -24,44 +24,22 @@
 
 #pragma once
 #include "renderdoc_app.h"
+#include <windows.h>
 
 class RenderDocManager
 {
 public:
-    RenderDocManager(HWND p_Handle, LPCWSTR pRenderDocPath, LPCWSTR pCapturePath);
+    RenderDocManager(HWND p_Handle, LPCWSTR pRenderDocPath, const char* pCapturePath);
     ~RenderDocManager(void);
     void StartFrameCapture();
     void EndFrameCapture();
 
 private:
     HINSTANCE m_RenderDocDLL;
-    UINT32 m_SocketPort;
+    //UINT32 m_SocketPort;
     HWND m_Handle;
     bool m_CaptureStarted;
 
-    //General
-    pRENDERDOC_GetAPIVersion m_RenderDocGetAPIVersion;
-    pRENDERDOC_SetLogFile m_RenderDocSetLogFile;
-
-    //Capture
-    pRENDERDOC_SetCaptureOptions m_RenderDocSetCaptureOptions;
-    pRENDERDOC_GetCapture m_RenderDocGetCapture;
-    pRENDERDOC_SetActiveWindow m_RenderDocSetActiveWindow;
-    pRENDERDOC_TriggerCapture m_RenderDocTriggerCapture;
-    pRENDERDOC_StartFrameCapture m_RenderDocStartFrameCapture;
-    pRENDERDOC_EndFrameCapture m_RenderDocEndFrameCapture;
-
-    //Overlay
-    pRENDERDOC_GetOverlayBits m_RenderDocGetOverlayBits;
-    pRENDERDOC_MaskOverlayBits m_RenderDocMaskOverlayBits;
-
-    //Hotkeys
-    pRENDERDOC_SetFocusToggleKeys m_RenderDocSetFocusToggleKeys;
-    pRENDERDOC_SetCaptureKeys m_RenderDocSetCaptureKeys;
-
-    //Remote access
-    pRENDERDOC_InitRemoteAccess m_RenderDocInitRemoteAccess;
-
-    void* GetRenderDocFunctionPointer(HINSTANCE ModuleHandle, LPCSTR FunctionName);
+    RENDERDOC_API_1_1_1* m_renderDocFns = nullptr;
 };
 

@@ -22,74 +22,72 @@
 * THE SOFTWARE.
 ******************************************************************************/
 
-#include "stdafx.h"
 #include "RenderDocManager.h"
 #include <string>
 
-RenderDocManager::RenderDocManager(HWND p_Handle, LPCWSTR pRenderDocPath, LPCWSTR pCapturePath)
+RenderDocManager::RenderDocManager(HWND p_Handle, LPCWSTR pRenderDocPath, const char* pCapturePath)
 {
-    m_Handle = p_Handle;
-    m_CaptureStarted = false;
+	m_Handle = p_Handle;
+	m_CaptureStarted = false;
 
-    m_RenderDocDLL = LoadLibrary(pRenderDocPath);
+	m_RenderDocDLL = LoadLibrary(pRenderDocPath);
+	if (!m_RenderDocDLL)
+	{
+		if (IsDebuggerPresent())
+		{
+			__debugbreak();
+		}
+		return;
+	}
+	
+	pRENDERDOC_GetAPI getApi = (pRENDERDOC_GetAPI)GetProcAddress(m_RenderDocDLL, "RENDERDOC_GetAPI");
+	if (!getApi)
+	{
+		if (IsDebuggerPresent())
+		{
+			__debugbreak();
+		}
+		return;
+	}
+	getApi(eRENDERDOC_API_Version_1_1_1, (void**)&m_renderDocFns);
+	if (!m_renderDocFns)
+	{
+		if (IsDebuggerPresent())
+		{
+			__debugbreak();
+		}
+		return;
+	}
+	m_renderDocFns->SetLogFilePathTemplate(pCapturePath);
 
-    //Init function pointers
-    m_RenderDocGetAPIVersion = (pRENDERDOC_GetAPIVersion)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_GetAPIVersion");
-    m_RenderDocSetLogFile = (pRENDERDOC_SetLogFile)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_SetLogFile");
+	m_renderDocFns->SetFocusToggleKeys(NULL, 0);
+	m_renderDocFns->SetCaptureKeys(NULL, 0);
 
-    m_RenderDocSetCaptureOptions = (pRENDERDOC_SetCaptureOptions)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_SetCaptureOptions");
-    m_RenderDocGetCapture = (pRENDERDOC_GetCapture)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_GetCapture");
-    m_RenderDocSetActiveWindow = (pRENDERDOC_SetActiveWindow)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_SetActiveWindow");
-    m_RenderDocTriggerCapture = (pRENDERDOC_TriggerCapture)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_TriggerCapture");
-    m_RenderDocStartFrameCapture = (pRENDERDOC_StartFrameCapture)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_StartFrameCapture");
-    m_RenderDocEndFrameCapture = (pRENDERDOC_EndFrameCapture)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_EndFrameCapture");
+	// Uncomment to define a capture key.
+	//RENDERDOC_InputButton captureKey =  eRENDERDOC_Key_F12;
+	//m_renderDocFns->SetCaptureKeys(&captureKey, 1);
 
-    m_RenderDocGetOverlayBits = (pRENDERDOC_GetOverlayBits)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_GetOverlayBits");
-    m_RenderDocMaskOverlayBits = (pRENDERDOC_MaskOverlayBits)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_MaskOverlayBits");
 
-    m_RenderDocSetFocusToggleKeys = (pRENDERDOC_SetFocusToggleKeys)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_SetFocusToggleKeys");
-    m_RenderDocSetCaptureKeys = (pRENDERDOC_SetCaptureKeys)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_SetCaptureKeys");
+	m_renderDocFns->SetCaptureOptionU32(eRENDERDOC_Option_CaptureCallstacks, true);
+	//m_renderDocFns->SetCaptureOptionU32(eRENDERDOC_Option_CaptureAllCmdLists, true);
+	//m_renderDocFns->SetCaptureOptionU32(eRENDERDOC_Option_SaveAllInitials, true);
 
-    m_RenderDocInitRemoteAccess = (pRENDERDOC_InitRemoteAccess)GetRenderDocFunctionPointer(m_RenderDocDLL, "RENDERDOC_InitRemoteAccess");
+	// Init remote access.
+	//m_SocketPort = 0;
+	//m_RenderDocFns->LaunchReplayUI(&m_SocketPort, 0);
 
-    // Make sure that the code is compatible with the current installed version.
-    if (RENDERDOC_API_VERSION != m_RenderDocGetAPIVersion())
-    {
-        OutputDebugString(L"Render doc API is not compatible !");
-        FreeLibrary(m_RenderDocDLL);
-        return;
-    }
-
-    m_RenderDocSetLogFile(pCapturePath);
-
-    KeyButton captureKey = eKey_F12;
-
-    m_RenderDocSetFocusToggleKeys(NULL, 0);
-    m_RenderDocSetCaptureKeys(NULL, 0);
-
-    // Uncomment to define a capture key.
-    //KeyButton captureKey = eKey_F12;
-    //m_RenderDocSetCaptureKeys(&captureKey, 1);
-
-    CaptureOptions options;
-    // These options might slow down your program, enable only the ones you need.
-    options.CaptureCallstacks = true;
-    options.CaptureAllCmdLists = true;
-    options.SaveAllInitials = true;
-    
-    m_RenderDocSetCaptureOptions(&options);
-
-    // Init remote access.
-    m_SocketPort = 0;
-    m_RenderDocInitRemoteAccess(&m_SocketPort);
-
-    m_RenderDocMaskOverlayBits(eOverlay_None, eOverlay_None);
+	RENDERDOC_OverlayBits overlayBits = eRENDERDOC_Overlay_Default;
+	m_renderDocFns->MaskOverlayBits(0, overlayBits);
 }
 
 void RenderDocManager::StartFrameCapture()
 {
-    m_RenderDocStartFrameCapture(m_Handle);
-    m_CaptureStarted = true;
+	if (!m_renderDocFns)
+	{
+		return;
+	}
+	m_renderDocFns->StartFrameCapture(nullptr, m_Handle);
+	m_CaptureStarted = true;
 }
 
 // In some cases a capture can fail. It happens when Map() was called before the StartFrameCapture() and then Unmap() is called.
@@ -99,35 +97,33 @@ void RenderDocManager::StartFrameCapture()
 // m_RenderDocEndFrameCapture is called again.
 void RenderDocManager::EndFrameCapture()
 {
-    if(!m_CaptureStarted)
-        return;
+	if (!m_renderDocFns)
+	{
+		return;
+	}
 
-    if(m_RenderDocEndFrameCapture(m_Handle))
-    {
-        m_CaptureStarted = false;
-        return;
-    }
-    
-    OutputDebugString(L"Capture has failed !")
-        ;
-    // The capture has failed, calling m_RenderDocEndFrameCapture several time to make sure it won't keep capturing forever.
-    while (!m_RenderDocEndFrameCapture(m_Handle))
-    {
-    }
+	if(!m_CaptureStarted)
+		return;
 
-    m_CaptureStarted = false;
-    return;
+	if(m_renderDocFns->EndFrameCapture(nullptr, m_Handle))
+	{
+		m_CaptureStarted = false;
+		return;
+	}
+	
+	OutputDebugString(L"Capture has failed !")
+		;
+	// The capture has failed, calling m_RenderDocEndFrameCapture several time to make sure it won't keep capturing forever.
+	while (!m_renderDocFns->EndFrameCapture(nullptr, m_Handle))
+	{
+	}
+
+	m_CaptureStarted = false;
+	return;
 }
 
-RenderDocManager::~RenderDocManager(void)
+RenderDocManager::~RenderDocManager()
 {
-    FreeLibrary(m_RenderDocDLL);
+	FreeLibrary(m_RenderDocDLL);
 }
 
-void* RenderDocManager::GetRenderDocFunctionPointer(HINSTANCE ModuleHandle, LPCSTR FunctionName)
-{
-    void* OutTarget = NULL;
-    OutTarget = (void*)GetProcAddress(ModuleHandle, FunctionName);
-
-    return OutTarget;
-}
