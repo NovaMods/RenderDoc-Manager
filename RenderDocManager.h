@@ -26,21 +26,30 @@
 #define RENDER_DOC_MANAGER_H
 
 #include "renderdoc_app.h"
-#include <windows.h>
+#include <string>
+#include <GLFW/glfw3.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 class RenderDocManager
 {
 public:
-    RenderDocManager(HWND p_Handle, LPCWSTR pRenderDocPath, const char* pCapturePath);
+    RenderDocManager(GLFWwindow *window, std::string render_doc_path, std::string pCapturePath);
     ~RenderDocManager(void);
     void StartFrameCapture();
     void EndFrameCapture();
 
 private:
+#ifdef _WIN32
     HINSTANCE m_RenderDocDLL;
     //UINT32 m_SocketPort;
     HWND m_Handle;
+#endif
     bool m_CaptureStarted;
+
+
 
     RENDERDOC_API_1_1_1* m_renderDocFns = nullptr;
 };

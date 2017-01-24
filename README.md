@@ -7,3 +7,5 @@ You just need to call the RenderDocManager constructor before the D3D initializa
 The capture options defined in the code example might make the program run much slower, for better performances only activate the options you need.
 
 For more informations: http://www.alexandre-pestana.com/integrating-renderdoc/
+
+This fork has been modified to handle a GLFW window rather than a Win32 window, and is set up for OpenGL
