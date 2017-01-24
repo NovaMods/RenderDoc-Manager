@@ -22,7 +22,8 @@
  * THE SOFTWARE.
  ******************************************************************************/
 
-#pragma once
+#ifndef RENDER_DOC_API_H
+#define RENDER_DOC_API_H
 
 #if !defined(RENDERDOC_NO_STDINT)
 #include <stdint.h>
@@ -609,4 +610,6 @@ typedef int(RENDERDOC_CC *pRENDERDOC_GetAPI)(RENDERDOC_Version version, void **o
 
 #ifdef __cplusplus
 }    // extern "C"
+#endif
+
 #endif

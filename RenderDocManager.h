@@ -22,7 +22,9 @@
 * THE SOFTWARE.
 ******************************************************************************/
 
-#pragma once
+#ifndef RENDER_DOC_MANAGER_H
+#define RENDER_DOC_MANAGER_H
+
 #include "renderdoc_app.h"
 #include <windows.h>
 
@@ -43,3 +45,4 @@ private:
     RENDERDOC_API_1_1_1* m_renderDocFns = nullptr;
 };
 
+#endif
