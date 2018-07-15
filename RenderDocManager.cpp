@@ -31,7 +31,7 @@
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #endif
-#include <glfw/glfw3native.h>
+#include <GLFW/glfw3native.h>
 
 RenderDocManager::RenderDocManager(GLFWwindow *window, std::string render_doc_path, std::string pCapturePath) {
 #ifdef _WIN32
