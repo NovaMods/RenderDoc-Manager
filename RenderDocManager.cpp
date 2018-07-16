@@ -25,7 +25,6 @@
 #include "RenderDocManager.h"
 #include "renderdoc_app.h"
 
-#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
 
 #ifdef _WIN32
