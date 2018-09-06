@@ -27,16 +27,14 @@
 
 #include "renderdoc_app.h"
 #include <string>
-#include <GLFW/glfw3.h>
 
 #ifdef _WIN32
 #include <windows.h>
-#endif
 
 class RenderDocManager
 {
 public:
-    RenderDocManager(GLFWwindow *window, std::string render_doc_path, std::string pCapturePath);
+    RenderDocManager(HWND window, std::string render_doc_path, std::string pCapturePath);
     ~RenderDocManager(void);
     void StartFrameCapture();
     void EndFrameCapture();
@@ -54,4 +52,5 @@ private:
     RENDERDOC_API_1_1_1* m_renderDocFns = nullptr;
 };
 
+#endif
 #endif

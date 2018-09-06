@@ -25,16 +25,13 @@
 #include "RenderDocManager.h"
 #include "renderdoc_app.h"
 
-#include <easylogging++.h>
+#include <iostream>
 
 #ifdef _WIN32
-#define GLFW_EXPOSE_NATIVE_WIN32
-#endif
-#include <GLFW/glfw3native.h>
 
-RenderDocManager::RenderDocManager(GLFWwindow *window, std::string render_doc_path, std::string pCapturePath) {
+RenderDocManager::RenderDocManager(HWND window, std::string render_doc_path, std::string pCapturePath) {
 #ifdef _WIN32
-    m_Handle = glfwGetWin32Window(window);
+    m_Handle = window;
 #endif
     m_CaptureStarted = false;
 
@@ -43,24 +40,24 @@ RenderDocManager::RenderDocManager(GLFWwindow *window, std::string render_doc_pa
 #endif
 
     if(!m_RenderDocDLL) {
-        LOG(ERROR) << "Could not load RenderDoc DLL from path " << render_doc_path;
+        std::cerr << "Could not load RenderDoc DLL from path " << render_doc_path << "\n";
         return;
     }
-    
-    pRENDERDOC_GetAPI getApi = (pRENDERDOC_GetAPI)GetProcAddress(m_RenderDocDLL, "RENDERDOC_GetAPI");
+
+    auto getApi = (pRENDERDOC_GetAPI)GetProcAddress(m_RenderDocDLL, "RENDERDOC_GetAPI");
     if (!getApi) {
-        LOG(ERROR) << "Could not load RenderDoc API loading function";
+        std::cerr << "Could not load RenderDoc API loading function\n";
         return;
     }
     getApi(eRENDERDOC_API_Version_1_1_1, (void**)&m_renderDocFns);
     if(!m_renderDocFns) {
-        LOG(ERROR) << "Could not load RenderDoc API";
+        std::cerr << "Could not load RenderDoc API\n";
         return;
     }
     m_renderDocFns->SetLogFilePathTemplate(pCapturePath.c_str());
 
-    m_renderDocFns->SetFocusToggleKeys(NULL, 0);
-    m_renderDocFns->SetCaptureKeys(NULL, 0);
+    m_renderDocFns->SetFocusToggleKeys(nullptr, 0);
+    m_renderDocFns->SetCaptureKeys(nullptr, 0);
 
     RENDERDOC_InputButton captureKey =  eRENDERDOC_Key_F12;
     m_renderDocFns->SetCaptureKeys(&captureKey, 1);
@@ -103,7 +100,7 @@ void RenderDocManager::EndFrameCapture() {
         return;
     }
     
-    LOG(ERROR) << "Capture has failed !";
+    std::cerr << "Capture has failed !\n";
     // The capture has failed, calling m_RenderDocEndFrameCapture several time to make sure it won't keep capturing forever.
     while (!m_renderDocFns->EndFrameCapture(nullptr, m_Handle)) {}
 
@@ -116,4 +113,6 @@ RenderDocManager::~RenderDocManager() {
     FreeLibrary(m_RenderDocDLL);
 #endif
 }
+
+#endif
 
