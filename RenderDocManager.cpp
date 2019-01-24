@@ -29,27 +29,24 @@
 
 #ifdef _WIN32
 
-RenderDocManager::RenderDocManager(HWND window, std::string render_doc_path, std::string pCapturePath) {
-#ifdef _WIN32
-    m_Handle = window;
-#endif
+RenderDocManager::RenderDocManager(const std::string& renderdoc_dll_path, const std::string& pCapturePath) {
     m_CaptureStarted = false;
 
 #ifdef _WIN32
-    m_RenderDocDLL = LoadLibrary(render_doc_path.c_str());
+    m_RenderDocDLL = LoadLibrary(renderdoc_dll_path.c_str());
 #endif
 
     if(!m_RenderDocDLL) {
-        std::cerr << "Could not load RenderDoc DLL from path " << render_doc_path << "\n";
+        std::cerr << "Could not load RenderDoc DLL from " << renderdoc_dll_path.c_str() << "\n";
         return;
     }
 
-    auto getApi = (pRENDERDOC_GetAPI)GetProcAddress(m_RenderDocDLL, "RENDERDOC_GetAPI");
+    const auto getApi = reinterpret_cast<pRENDERDOC_GetAPI>(GetProcAddress(m_RenderDocDLL, "RENDERDOC_GetAPI"));
     if (!getApi) {
         std::cerr << "Could not load RenderDoc API loading function\n";
         return;
     }
-    getApi(eRENDERDOC_API_Version_1_1_1, (void**)&m_renderDocFns);
+    getApi(eRENDERDOC_API_Version_1_1_1, reinterpret_cast<void**>(&m_renderDocFns));
     if(!m_renderDocFns) {
         std::cerr << "Could not load RenderDoc API\n";
         return;
@@ -69,7 +66,7 @@ RenderDocManager::RenderDocManager(HWND window, std::string render_doc_path, std
     m_renderDocFns->SetCaptureOptionU32(eRENDERDOC_Option_VerifyMapWrites, true);
     m_renderDocFns->SetCaptureOptionU32(eRENDERDOC_Option_SaveAllInitials, true);
 
-    RENDERDOC_OverlayBits overlayBits = eRENDERDOC_Overlay_Default;
+    const RENDERDOC_OverlayBits overlayBits = eRENDERDOC_Overlay_Default;
     m_renderDocFns->MaskOverlayBits(0, overlayBits);
 }
 

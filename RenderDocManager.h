@@ -34,7 +34,7 @@
 class RenderDocManager
 {
 public:
-    RenderDocManager(HWND window, std::string render_doc_path, std::string pCapturePath);
+    RenderDocManager(const std::string& renderdoc_dll_path, const std::string& pCapturePath);
     ~RenderDocManager(void);
     void StartFrameCapture();
     void EndFrameCapture();
